@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+
 import GenerateImageForm from "./CreatePost/GenerateImageForm";
 import GeneratedImageCard from "./CreatePost/GeneratedImageCard";
+
 import {
   generateImage as generateImageAPI,
   createPost as createPostAPI,
@@ -20,7 +22,6 @@ const Heading = styled.h1`
   font-size: 28px;
   font-weight: 700;
   color: ${({ theme }) => theme.text.primary};
-  letter-spacing: -0.5px;
 
   span {
     background: linear-gradient(
@@ -28,6 +29,7 @@ const Heading = styled.h1`
       ${({ theme }) => theme.yellow},
       #f7e98e
     );
+
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -47,15 +49,10 @@ const ContentLayout = styled.div`
 
 const LeftColumn = styled.div`
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
 `;
 
 const RightColumn = styled.div`
   flex: 1;
-  display: flex;
-  flex-direction: column;
 `;
 
 const CreatePost = () => {
@@ -68,64 +65,89 @@ const CreatePost = () => {
   });
 
   const [generateImageLoading, setGenerateImageLoading] = useState(false);
+
   const [createPostLoading, setCreatePostLoading] = useState(false);
+
   const [error, setError] = useState("");
 
-  // Handle Input Changes
+  // HANDLE INPUT CHANGES
   const handleChange = (e) => {
-    setPost({
-      ...post,
+    setPost((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
-  // Generate AI Image
+  // GENERATE IMAGE
   const handleGenerateImage = async () => {
-    if (!post.prompt) return;
-
-    setError("");
-    setGenerateImageLoading(true);
+    if (!post.prompt) {
+      setError("Please enter image prompt");
+      return;
+    }
 
     try {
+      setError("");
+      setGenerateImageLoading(true);
+
       const res = await generateImageAPI({
         prompt: post.prompt,
       });
 
-      // FIXED HERE
-      setPost({
-        ...post,
+      console.log(res.data);
+
+      setPost((prev) => ({
+        ...prev,
         photo: res.data.photo,
-      });
+      }));
 
     } catch (err) {
       console.log(err);
 
       setError(
         err?.response?.data?.message ||
-          "Failed to generate image. Please try again."
+          "Failed to generate image"
       );
+
     } finally {
       setGenerateImageLoading(false);
     }
   };
 
-  // Save Post
+  // POST IMAGE
   const handlePostImage = async () => {
-    if (!post.name || !post.prompt || !post.photo) return;
 
-    setError("");
-    setCreatePostLoading(true);
+    // VALIDATIONS
+    if (!post.name) {
+      setError("Please enter author name");
+      return;
+    }
+
+    if (!post.prompt) {
+      setError("Please enter image prompt");
+      return;
+    }
+
+    if (!post.photo) {
+      setError("Please generate an image first");
+      return;
+    }
 
     try {
+      setError("");
+      setCreatePostLoading(true);
+
       await createPostAPI(post);
+
       navigate("/");
+
     } catch (err) {
       console.log(err);
 
       setError(
         err?.response?.data?.message ||
-          "Failed to create post. Please try again."
+          "Failed to create post"
       );
+
     } finally {
       setCreatePostLoading(false);
     }
@@ -138,6 +160,7 @@ const CreatePost = () => {
       </Heading>
 
       <ContentLayout>
+
         <LeftColumn>
           <GenerateImageForm
             post={post}
@@ -156,6 +179,7 @@ const CreatePost = () => {
             loading={generateImageLoading}
           />
         </RightColumn>
+
       </ContentLayout>
     </Container>
   );
